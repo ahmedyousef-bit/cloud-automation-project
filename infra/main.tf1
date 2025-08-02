@@ -32,6 +32,26 @@ workflow BackupWorkflow
 {
   Write-Output "Starting backup..."
   # Simulate backup
+resource "azurerm_automation_runbook" "backup_runbook" {
+  name                    = "BlobBackupRunbook"
+  location                = azurerm_automation_account.autoacct.location
+  resource_group_name     = azurerm_automation_account.autoacct.resource_group_name
+  automation_account_name = azurerm_automation_account.autoacct.name
+
+  log_verbose             = true
+  log_progress            = true
+  description             = "Runbook to backup a blob in Azure Storage"
+  runbook_type            = "PowerShell"
+  content                 = file("${path.module}/scripts/runbook.ps1")
+  publish_content_link {
+  
+  }
+
+  depends_on = [
+    azurerm_automation_account.autoacct
+  ]
+}
+
   Start-Sleep -Seconds 5
   Write-Output "Backup complete."
 }
