@@ -2,7 +2,7 @@ provider "azurerm" {
   features {}
 }
 resource "azurerm_resource_group" "rg" {
-  name     = "rg-backup-project"
+  name     = "modified-rg-backup-project"
   location = "East US"
 }
 resource "azurerm_storage_account" "sa" {
