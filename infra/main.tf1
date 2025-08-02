@@ -1,0 +1,39 @@
+provider "azurerm" {
+  features {}
+}
+resource "azurerm_resource_group" "rg" {
+  name     = "rg-backup-project"
+  location = "East US"
+}
+resource "azurerm_storage_account" "sa" {
+  name                     = "backupstorage12345"
+  resource_group_name      = azurerm_resource_group.rg.name
+  location                 = azurerm_resource_group.rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+resource "azurerm_automation_account" "aa" {
+  name                = "backup-automation"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku_name            = "Free"
+}
+resource "azurerm_automation_runbook" "rb" {
+  name                    = "backup-runbook"
+  location                = azurerm_automation_account.aa.location
+  resource_group_name     = azurerm_automation_account.aa.resource_group_name
+  automation_account_name = azurerm_automation_account.aa.name
+  log_verbose             = true
+  log_progress            = true
+  description             = "This runbook performs a backup operation"
+  runbook_type            = "PowerShellWorkflow"
+  content                 = <<CONTENT
+workflow BackupWorkflow
+{
+  Write-Output "Starting backup..."
+  # Simulate backup
+  Start-Sleep -Seconds 5
+  Write-Output "Backup complete."
+}
+CONTENT
+}
