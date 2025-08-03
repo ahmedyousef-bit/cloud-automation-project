@@ -1,3 +1,4 @@
 variable "location" {
-  default = "East US"
+  description = "Azure Region"
+  default     = "East US"
 }
