@@ -10,7 +10,6 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-
     env:
       TF_WORKING_DIR: ./infra
 
@@ -18,23 +17,28 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
+      # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.6.0
 
+      # Terraform Init
       - name: Terraform Init
         run: terraform init
         working-directory: ${{ env.TF_WORKING_DIR }}
 
+      # Terraform Validate
       - name: Terraform Validate
         run: terraform validate
         working-directory: ${{ env.TF_WORKING_DIR }}
 
+      # Terraform Plan
       - name: Terraform Plan
         run: terraform plan -out=tfplan
         working-directory: ${{ env.TF_WORKING_DIR }}
 
+      # Terraform Apply
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
