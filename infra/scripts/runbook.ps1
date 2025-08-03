@@ -7,41 +7,44 @@
 
 Write-Output "⏳ Starting backup operation..."
 
-# Ensure Az modules are imported
-Import-Module Az.Accounts -ErrorAction SilentlyContinue
-Import-Module Az.Storage -ErrorAction SilentlyContinue
-
-# Parameters (can be modified)
+# Parameters (dynamic)
 $resourceGroup = "my-rg"
 $storageAccount = "mystorageacct"
 $container = "data"
 $sourceBlob = "important-data.json"
 $backupBlob = "important-data-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
 
+# Ensure Az module is imported
+if (-not (Get-Module -ListAvailable -Name Az)) {
+    Write-Error "❌ Az module is not installed. Please install it using 'Install-Module Az' and try again."
+    exit
+}
+
 # Authenticate and get storage context
 try {
-    $storageAccountObj = Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageAccount -ErrorAction Stop
-    $ctx = $storageAccountObj.Context
-    if (-not $ctx) {
-        Write-Error "❌ Storage Context is null. Please check your credentials and account info."
-        return
-    }
+    $ctx = (Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageAccount).Context
 } catch {
-    Write-Error "❌ Failed to get Storage Context. Error: $($_.Exception.Message)"
-    return
+    Write-Error "❌ Failed to get Storage Context. Error: $_"
+    exit
+}
+
+# Check if source blob exists
+$srcBlobObj = Get-AzStorageBlob -Container $container -Blob $sourceBlob -Context $ctx
+if (-not $srcBlobObj) {
+    Write-Error "❌ Source blob '$sourceBlob' does not exist in container '$container'."
+    exit
 }
 
 # Start backup operation
 try {
-    $copyStatus = Start-AzStorageBlobCopy `
+    Start-AzStorageBlobCopy `
         -SrcBlob $sourceBlob `
         -SrcContainer $container `
         -DestBlob $backupBlob `
         -DestContainer $container `
         -Context $ctx
 
-    Write-Output "✅ Backup operation started. New blob: $backupBlob"
-    Write-Output "Copy status: $($copyStatus.Status)"
+    Write-Output "✅ Backup operation completed. New blob: $backupBlob"
 } catch {
-    Write-Error "❌ Failed to copy blob. Error: $($_.Exception.Message)"
+    Write-Error "❌ Failed to copy blob. Error: $_"
 }
